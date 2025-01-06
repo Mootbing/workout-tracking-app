@@ -8,11 +8,23 @@ import * as DocumentPicker from 'expo-document-picker';
 
 import {CSVStringToJSON, displayWorkoutItenaryString, estimateWorkoutTime} from '../helper/parser';
 import { Collapsible } from '@/components/Collapsible';
-import { Link, useNavigation } from 'expo-router';
 import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 
+import { Audio } from 'expo-av';
+import { Alert } from 'react-native';
+import { router } from 'expo-router';
+
+function getDaysIntoYear() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const diff = now - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+  return dayOfYear;
+}
+
 export default function Index() {
-  const [day, setDay] = useState(27);//retrieve from localstorage later
+  const [day, setDay] = useState(0);//retrieve from localstorage later
 
   const [data, setData] = useState([]);
   const [title, setTitle] = useState("Workout Tracker");
@@ -20,7 +32,6 @@ export default function Index() {
   const scrollViewRef = useRef<Animated.ScrollView>(null);
 
   const [workoutSelected, setWorkoutSelected] = useContext(WorkoutSelectedContext);
-  const navigation = useNavigation();
 
   const pickDocument = async () => {
     try {
@@ -36,7 +47,13 @@ export default function Index() {
 
         const contents = await FileSystem.readAsStringAsync(asset.uri);
 
-        setData(CSVStringToJSON(contents));
+        const d = CSVStringToJSON(contents);
+
+        setData(d);
+
+        // setDay(getDaysIntoYear() % d.length);
+        setDay(23);
+
         setTitle(asset.name);
       }
     } catch (err) {
@@ -47,7 +64,7 @@ export default function Index() {
   useEffect(() => {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({y: 
-        90 * day - 10
+        75 * day
         , animated: true});
     }
   }, [data]);
@@ -66,7 +83,7 @@ export default function Index() {
             let isOnCurrentDay = () => index + 1 == day;
 
             return <View key={index} style={{position: "relative", paddingTop: 25, borderRadius: 15}}>
-              <ThemedView darkColor='rgba(255, 255, 255, 0.2)' lightColor='rgba(0, 0, 0, 0.2)' style={{ height: 1, margin: 10, marginBottom: 25}} />
+              <ThemedView darkColor='rgba(255, 255, 255, 0.2)' lightColor='rgba(0, 0, 0, 0.2)' style={{ height: 1, marginBottom: 25}} />
               {item.routine.length != 0 ? <Collapsible fontType={getFontSizeByDay()} title={item.day + " - " + item.category} open={isOnCurrentDay()}>
                  <ThemedText type='regular' darkColor="rgba(255, 255, 255, 0.7)" lightColor='rgba(0, 0, 0, 0.7)'>
                   {item.routine.length} exercises - {estimateWorkoutTime(item.routine)}
@@ -76,11 +93,11 @@ export default function Index() {
                 <Pressable 
                   style={{ position: "absolute", right: 0, top: -20}} 
                   onPress={() => {
-                    navigation.navigate("routine");
+                    router.push("routine");
                     setWorkoutSelected(item);
                   }}
                 >
-                  <ThemedText type='default' darkColor='rgb(135, 165, 255)' lightColor='rgb(135, 165, 255)'> Start </ThemedText>
+                  <ThemedText type='default' darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)'> Start </ThemedText>
                 </Pressable>
                 {/* </Link> */}
 
@@ -113,6 +130,6 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     padding: 15,
-    paddingTop: "25%"
+    paddingTop: 75
   },
 });

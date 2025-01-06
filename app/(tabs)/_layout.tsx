@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Stack, Tabs } from 'expo-router';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 
@@ -11,23 +11,28 @@ import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
-    const [workouts, setWorkouts] = useState([]);
+    const [workoutSelected, setWorkoutSelected] = useState({});
 
     return (
-        <WorkoutSelectedContext.Provider value={[workouts, setWorkouts]}>
-            <Tabs
+        <WorkoutSelectedContext.Provider value={[workoutSelected, setWorkoutSelected]}>
+            <Stack
                 screenOptions={{
-                    headerShown: false,
                     tabBarStyle: { display: 'none' }
                 }}
             >
-                <Tabs.Screen
+                <Stack.Screen
                     name="index"
+                    options={{
+                        headerShown: false,
+                    }}
                 />
-                <Tabs.Screen
+                <Stack.Screen
                     name="routine"
+                    options={{
+                        title: `Day ${workoutSelected?.day} - ${workoutSelected?.category}`,
+                    }}
                 />
-            </Tabs>
+            </Stack>
         </WorkoutSelectedContext.Provider>
     );
 }

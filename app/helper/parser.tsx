@@ -36,7 +36,7 @@ export function CSVStringToJSON(str: string) {
     }
   });
 
-  console.log(structuredData)
+  // console.log(structuredData)
 
   return structuredData;
 }
@@ -59,7 +59,7 @@ function beautifyTime (timeInSeconds) {
 }
 
 export function displayWorkoutItenaryString (itenary) {
-  console.log(itenary);
+  // console.log(itenary);
 
   let str = "";
 
