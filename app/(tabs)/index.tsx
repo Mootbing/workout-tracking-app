@@ -1,4 +1,4 @@
-import { Animated, Image, StyleSheet, Platform, ScrollView, View, Button, Text, StatusBar, Pressable } from 'react-native';
+import { Animated, Image, StyleSheet, Platform, ScrollView, View, Button, Text, StatusBar, Pressable, TouchableOpacity } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -72,10 +72,12 @@ export default function Index() {
   return (
     // <ThemedView style={{ }}>
       <Animated.ScrollView style={styles.container} ref={scrollViewRef}>
-        {data.length == 0 && <View>
+        <View>
           <ThemedText type="title">{title}</ThemedText>
-        </View>} 
-        <Button title="Update Workout (Upload CSV)" onPress={pickDocument} />
+        </View>
+        <TouchableOpacity onPress={pickDocument}>
+          <ThemedText type="default" darkColor='rgb(213, 130, 255)' lightColor='rgb(213, 130, 255)'>Upload New Workout CSV</ThemedText>
+        </TouchableOpacity>
         {data.length != 0 && <View>
           {data.map((item, index) => {
 

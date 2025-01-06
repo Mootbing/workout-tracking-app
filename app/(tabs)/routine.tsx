@@ -30,6 +30,7 @@ const RoutineScreen = () => {
 
         if (routinesLeft.length === 0) {
             Speech.speak("Workout Completed Congratulations");
+            router.back();
             return;
         }
 
@@ -56,9 +57,8 @@ const RoutineScreen = () => {
 
     if (routinesLeft.length === 0) {
         return <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <ThemedText type="title">Workout Completed</ThemedText>
-            <ThemedText type="default">Congratulatoins!</ThemedText>
-            <Button title="Return to Index" onPress={() => router.back()} />
+            <ThemedText type="subtitle">Workout Completed, Congratulations!</ThemedText>
+            <Button title="Back to Home" onPress={() => router.back()} />
         </View>
     }
 
@@ -123,7 +123,7 @@ const RoutineScreen = () => {
                         setRoutinesLeft([...routinesLeft.slice(1), routinesLeft[0]]);
                     }}>
                         {/* <Image source={require('@/assets/images/skip.png')} style={{width: 24, height: 24}} />  */}
-                        <ThemedText type='default' darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)'>Later</ThemedText>
+                        <ThemedText type='default' darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)'>Do Last</ThemedText>
                     </TouchableOpacity>}
                     <TouchableOpacity onPress={() => {
                         setRoutinesLeft(routinesLeft.slice(1));
