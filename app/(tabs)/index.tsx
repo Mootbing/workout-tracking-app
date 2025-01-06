@@ -51,8 +51,8 @@ export default function Index() {
 
         setData(d);
 
-        // setDay(getDaysIntoYear() % d.length);
-        setDay(23);
+        setDay(getDaysIntoYear() % d.length);
+        // setDay(23);
 
         setTitle(asset.name);
       }
@@ -83,7 +83,7 @@ export default function Index() {
             let isOnCurrentDay = () => index + 1 == day;
 
             return <View key={index} style={{position: "relative", paddingTop: 25, borderRadius: 15}}>
-              <ThemedView darkColor='rgba(255, 255, 255, 0.2)' lightColor='rgba(0, 0, 0, 0.2)' style={{ height: 1, marginBottom: 25}} />
+              <ThemedView darkColor='rgba(255, 255, 255, 0.15)' lightColor='rgba(0, 0, 0, 0.15)' style={{ height: 1, marginBottom: 25}} />
               {item.routine.length != 0 ? <Collapsible fontType={getFontSizeByDay()} title={item.day + " - " + item.category} open={isOnCurrentDay()}>
                  <ThemedText type='regular' darkColor="rgba(255, 255, 255, 0.7)" lightColor='rgba(0, 0, 0, 0.7)'>
                   {item.routine.length} exercises - {estimateWorkoutTime(item.routine)}
@@ -91,7 +91,7 @@ export default function Index() {
 
                 {/* <Link href="routine" asChild> */}
                 <Pressable 
-                  style={{ position: "absolute", right: 0, top: -20}} 
+                  style={{ position: "absolute", right: 0, top: -25}} 
                   onPress={() => {
                     router.push("routine");
                     setWorkoutSelected(item);
@@ -129,7 +129,7 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 15,
+    padding: 25,
     paddingTop: 75
   },
 });
