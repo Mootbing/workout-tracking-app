@@ -23,14 +23,40 @@ const RoutineScreen = () => {
 
     //get params
     const [workoutSelected, setWorkoutSelected] = useContext(WorkoutSelectedContext);
-    const [weight, setWeight] = useState(0);
-    const [showChart, setShowChart] = useState(false);
+
+    const [loggableStat, setLoggableStat] = useState(0);
+    const [showChart, setShowChart] = useState(true);
+    const [chartData, setShowChartData] = useState({
+        labels: ["Jan", "Feb", "Mar"],
+        datasets: [
+            {
+                data: [
+                    Math.random() * 100,
+                    Math.random() * 100,
+                    Math.random() * 100,
+                    Math.random() * 100,
+                    Math.random() * 100,
+                    Math.random() * 100
+                ]
+            }
+        ]
+    });
 
     const { category, day, routine } = workoutSelected;
 
     const [routinesLeft, setRoutinesLeft] = useState(routine);
 
     const [timer, setTimer] = useState(-1);
+
+    const fetchChartDataFor = (routineItem) => {
+        console.log(routineItem.name)
+
+        Alert.alert("No data exists. Log some data to see the chart.");
+    }
+
+    const setChartDataFor = (routineItem) => {
+
+    }
 
     const pruneRests = () => {
 
@@ -48,7 +74,7 @@ const RoutineScreen = () => {
 
         if (routinesLeft.length === 0) {
             Speech.speak("Workout Completed Congratulations");
-            Alert.alert("Workout Completed Congratulations!");
+            Alert.alert("Workout Completed!");
             router.back();
             return;
         }
@@ -122,86 +148,80 @@ const RoutineScreen = () => {
                                 }</Text>
                                 <ThemedText type="title" style={{ marginTop: 5, fontWeight: 300, marginBottom: 25 }}>{routineItem.name}</ThemedText>
                                 
-                                {showChart && <View>
-                                    <LineChart
-                                        data={{
-                                        labels: ["Jan", "Feb", "Mar"],
-                                        datasets: [
-                                            {
-                                            data: [
-                                                Math.random() * 100,
-                                                Math.random() * 100,
-                                                Math.random() * 100,
-                                                Math.random() * 100,
-                                                Math.random() * 100,
-                                                Math.random() * 100
-                                            ]
+                                {routinesLeft[0].name != "Rest" && <>
+                                    {showChart && <View>
+                                        {Object.keys(chartData).length != 0 && <LineChart
+                                            data={chartData}
+                                            width={Dimensions.get("window").width - 50} // from react-native
+                                            height={Dimensions.get("window").height * 0.3}
+                                            yAxisInterval={1} // optional, defaults to 1
+                                            chartConfig={{
+                                            backgroundColor: "#000",
+                                            decimalPlaces: 0, // optional, defaults to 2dp
+                                            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                            propsForDots: {
+                                                r: "3"
                                             }
-                                        ]
-                                        }}
-                                        width={Dimensions.get("window").width - 50} // from react-native
-                                        height={220}
-                                        yAxisSuffix="lbs"
-                                        yAxisInterval={1} // optional, defaults to 1
-                                        chartConfig={{
-                                        backgroundColor: "#000",
-                                        decimalPlaces: 0, // optional, defaults to 2dp
-                                        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                                        labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                                        propsForDots: {
-                                            r: "3",
-                                            strokeWidth: "2",
-                                            stroke: "rgba(255, 255, 255 0.2)"
-                                        }
-                                        }}
-                                        bezier
-                                        style={{
-                                            marginVertical: 8
-                                        }}
-                                    />
-                                </View>}
+                                            }}
+                                            bezier
+                                            style={{
+                                                marginVertical: 8
+                                            }}
+                                        />}
+                                    </View>}
 
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 }}>
-                                    <TouchableOpacity
-                                        style={{
-                                            width: 50,
-                                            backgroundColor: showChart ?  "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 255, 0.1)", 
-                                            padding: 10, 
-                                            borderRadius: 5
-                                        }}
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 }}>
+                                        <TouchableOpacity
+                                            style={{
+                                                width: 50,
+                                                backgroundColor: showChart ?  "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 255, 0.1)", 
+                                                padding: 10, 
+                                                borderRadius: 5
+                                            }}
 
-                                        onPress={() => {
-                                            setShowChart(!showChart);
-                                        }} 
-                                    >
-                                        <Text style={{color: "rgb(135, 167, 255)", alignSelf: "center"}}>📊</Text>
-                                    </TouchableOpacity>
+                                            onPress={() => {
+                                                if (!showChart) {
+                                                    setShowChart(true);
+                                                    fetchChartDataFor(routineItem);
+                                                }
+                                                else {
+                                                    setShowChart(false);
+                                                }
+                                            }} 
+                                        >
+                                            <Text style={{color: "rgb(135, 167, 255)", alignSelf: "center"}}>📊</Text>
+                                        </TouchableOpacity>
 
-                                    <TextInput 
-                                        keyboardType='numeric'
-                                        maxLength={10} 
-                                        placeholder="Weight (lbs)" 
-                                        placeholderTextColor={"rgba(255, 255, 255, 0.3)"}
-                                        value={weight}
-                                        onChange={(e) => setWeight(parseInt(e.nativeEvent.text))}
-                                        style={{ width: Dimensions.get("window").width - 50 - 75 - 50 - 30, backgroundColor: "rgba(255, 255, 255, 0.1)", color: "rgba(255, 255, 255, 0.5)", padding: 10, borderRadius: 5 }}
-                                    />
-                                    <TouchableOpacity
-                                        style={{
-                                            width: 75, 
-                                            backgroundColor: "rgba(255, 255, 255, 0.1)", 
-                                            padding: 10, 
-                                            borderRadius: 5
-                                        }}
+                                        <TextInput 
+                                            keyboardType='numeric'
+                                            placeholder="Loggable (Numeric) Stats: Weight, Time, etc." 
+                                            placeholderTextColor={"rgba(255, 255, 255, 0.3)"}
+                                            value={loggableStat}
+                                            onChangeText={(e) => 
+                                                {
+                                                    setLoggableStat(e.replaceAll(/[^0-9]/g, ''));
+                                                }
+                                            }
+                                            style={{ width: Dimensions.get("window").width - 50 - 75 - 50 - 30, backgroundColor: "rgba(255, 255, 255, 0.1)", color: "rgba(255, 255, 255, 0.5)", padding: 10, borderRadius: 5 }}
+                                        />
+                                        <TouchableOpacity
+                                            style={{
+                                                width: 75, 
+                                                backgroundColor: "rgba(255, 255, 255, 0.1)", 
+                                                padding: 10, 
+                                                borderRadius: 5
+                                            }}
 
-                                        onPress={() => {
-                                            console.log("Logged: ", weight, routineItem);
-                                            setWeight(0);
-                                        }} 
-                                    >
-                                        <Text style={{color: "rgb(135, 167, 255)", alignSelf: "center"}}>Log</Text>
-                                    </TouchableOpacity>
-                                </View>
+                                            onPress={() => {
+                                                setChartDataFor(routineItem);
+                                                setLoggableStat(0);
+                                            }} 
+                                        >
+                                            <Text style={{color: "rgb(135, 167, 255)", alignSelf: "center"}}>Log</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </>}
                             </View>
                         }
 

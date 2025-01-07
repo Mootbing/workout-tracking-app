@@ -105,3 +105,11 @@ export function estimateWorkoutTime (workout) {
 
   return beautifyTime(time).split("m")[0] + " minutes";
 }
+
+// const saveURI = FileSystem.document
+
+// exoprt const saveWorkoutToCSV = 
+
+export const getWorkoutFromCSV = (itenaryName) => {
+
+} 
