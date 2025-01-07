@@ -12,7 +12,7 @@ const restRoutine = {
     name: "Rest",
     set: 0,
     rep: null,
-    time: 5,
+    time: 30,
     double: false
 }
 
@@ -112,7 +112,7 @@ const RoutineScreen = () => {
                     routinesLeft.map((routineItem, index) => {
 
                         if (index === 0) {
-                            return <View>
+                            return <View key={index}>
                                 <Text type="default" style={{fontSize: 75, fontWeight: 700, marginTop: 5, color: "rgba(255, 255, 255, 1)"}} >{
                                     timer > 0 ? beautifyTime(timer) : displayWorkoutItenaryString(routineItem).split(" ")[0]
                                 }</Text>
@@ -127,19 +127,19 @@ const RoutineScreen = () => {
                                 setRoutinesLeft([...nowAndOn, ...later]);
                                 pruneRests();
                             }}>
-                            <ThemedView darkColor='rgba(255, 255, 255, 0.15)' lightColor='rgba(0, 0, 0, 0.15)' style={{height: 1, marginBottom: 25}} />
+                            <ThemedView darkColor='rgba(255, 255, 255, 0.1)' lightColor='rgba(0, 0, 0, 0.1)' style={{height: 1, marginBottom: 25}} />
                             <ThemedText type="regular" darkColor='rgba(255, 255, 255, 0.5)' lightColor='rgba(0, 0, 0, 0.5)' >{displayWorkoutItenaryString(routineItem).split(" ")[0]}</ThemedText>
                             <ThemedText type="default" style={{fontWeight: 300}}>{displayWorkoutItenaryString(routineItem).split(" ").slice(1).join(" ")}</ThemedText>
-                            <ThemedText type='default' darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)' style={{position: "absolute", right: 0, top: "50%"}}>Swap</ThemedText>
+                            <ThemedText type='default' darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)' style={{position: "absolute", right: 0, top: "50%"}}>Swap</ThemedText>
                         </Pressable>
                     })
                 }
             </View>
             <View style={{height: 150}}></View>
         </ScrollView>
-        <BlurView intensity={20} style={{position: "absolute", bottom: 0, paddingBottom: 25+15, width: "100%"}}>
+        <BlurView intensity={10} style={{position: "absolute", bottom: 0, paddingBottom: 25+15, width: "100%"}}>
             <View style={{flexDirection: 'row', justifyContent: 'space-around', marginTop: 25}}>
-                    {routinesLeft[0].name != "Rest" && <TouchableOpacity onPress={() => {
+                    {routinesLeft[0].name != "Rest" && <TouchableOpacity style={{width: "30%", alignItems: "center"}} onPress={() => {
                         let currRoutine = routinesLeft[0];
                         currRoutine.set -= 1;
 
@@ -183,7 +183,8 @@ const RoutineScreen = () => {
 
 const styles = StyleSheet.create({
     container: {
-        padding: 25
+        padding: 25,
+        backgroundColor: "black"
     },
     text: {
         fontSize: 20,

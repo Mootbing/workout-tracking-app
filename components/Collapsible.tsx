@@ -1,4 +1,4 @@
-import { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren, useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -8,9 +8,13 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { View } from 'react-native';
 
-export function Collapsible({ children, title, open = false, fontType = "defaultSemiBold" }: PropsWithChildren & { title: string, open?: boolean, fontType?: string }) {
+export function Collapsible({ children, title, open = false}: PropsWithChildren & { title: string, open?: boolean, fontType?: string }) {
   const [isOpen, setIsOpen] = useState(open);
   const theme = useColorScheme() ?? 'light';
+
+  useEffect(() => {
+    setIsOpen(open);
+  }, [open]);
 
   return (
     <View>

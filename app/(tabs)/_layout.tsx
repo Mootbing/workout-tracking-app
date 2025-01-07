@@ -17,13 +17,14 @@ export default function TabLayout() {
         <WorkoutSelectedContext.Provider value={[workoutSelected, setWorkoutSelected]}>
             <Stack
                 screenOptions={{
-                    tabBarStyle: { display: 'none' }
+                    // tabBarStyle: { display: 'none' }
                 }}
             >
                 <Stack.Screen
                     name="index"
                     options={{
-                        headerShown: false,
+                        headerShown: true,
+                        title: `Workout Tracker`,
                     }}
                 />
                 <Stack.Screen

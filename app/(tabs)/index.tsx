@@ -12,7 +12,7 @@ import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 
 import { Audio } from 'expo-av';
 import { Alert } from 'react-native';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 
 import * as Speech from 'expo-speech';
 
@@ -31,9 +31,13 @@ export default function Index() {
   const [data, setData] = useState([]);
   const [title, setTitle] = useState("Workout Tracker");
 
+  const [peekAll, setPeekAll] = useState(false);
+
   const scrollViewRef = useRef<Animated.ScrollView>(null);
 
   const [workoutSelected, setWorkoutSelected] = useContext(WorkoutSelectedContext);
+
+  const navigation = useNavigation();
 
   const pickDocument = async () => {
     try {
@@ -53,10 +57,10 @@ export default function Index() {
 
         setData(d);
 
+        // setDay(23);/
         setDay(getDaysIntoYear() % d.length);
-        // setDay(23);
 
-        setTitle(asset.name);
+        navigation.setOptions({ title: asset.name + " - " + d.length + " Days" });
       }
     } catch (err) {
       console.log(err.message);
@@ -66,7 +70,7 @@ export default function Index() {
   useEffect(() => {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({y: 
-        75 * day
+        73.5 * day
         , animated: true});
     }
   }, [data]);
@@ -74,12 +78,19 @@ export default function Index() {
   return (
     // <ThemedView style={{ }}>
       <Animated.ScrollView style={styles.container} ref={scrollViewRef}>
-        <View>
+        {/* <View>
           <ThemedText type="title">{title}</ThemedText>
+        </View> */}
+        <View style={{flexDirection: 'row', gap: 10}}>
+          <TouchableOpacity onPress={pickDocument}>
+            <ThemedText type="default" darkColor='rgb(255, 130, 130)' lightColor='rgb(255, 130, 130)'>Upload Workout CSV</ThemedText>
+          </TouchableOpacity>
+          {data.length != 0 && <TouchableOpacity onPress={() => {
+            setPeekAll(!peekAll);
+          }}>
+            <ThemedText type="default" darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)'>{!peekAll ? "Reveal" : "Hide"} All</ThemedText>
+          </TouchableOpacity>}
         </View>
-        <TouchableOpacity onPress={pickDocument}>
-          <ThemedText type="default" darkColor='rgb(213, 130, 255)' lightColor='rgb(213, 130, 255)'>Upload New Workout CSV</ThemedText>
-        </TouchableOpacity>
         {data.length != 0 && <View>
           {data.map((item, index) => {
 
@@ -87,8 +98,8 @@ export default function Index() {
             let isOnCurrentDay = () => index + 1 == day;
 
             return <View key={index} style={{position: "relative", paddingTop: 25, borderRadius: 15}}>
-              <ThemedView darkColor='rgba(255, 255, 255, 0.15)' lightColor='rgba(0, 0, 0, 0.15)' style={{ height: 1, marginBottom: 25}} />
-              {item.routine.length != 0 ? <Collapsible fontType={getFontSizeByDay()} title={item.day + " - " + item.category} open={isOnCurrentDay()}>
+              <ThemedView darkColor='rgba(255, 255, 255, 0.1)' lightColor='rgba(0, 0, 0, 0.1)' style={{ height: 1, marginBottom: 25}} />
+              {item.routine.length != 0 ? <Collapsible fontType={getFontSizeByDay()} title={item.day + " - " + item.category} open={isOnCurrentDay() || peekAll}>
                  <ThemedText type='regular' darkColor="rgba(255, 255, 255, 0.5)" lightColor='rgba(0, 0, 0, 0.5)'>
                   {item.routine.length} exercises - {estimateWorkoutTime(item.routine)}
                 </ThemedText>
@@ -134,6 +145,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     padding: 25,
-    paddingTop: 75
+    // paddingTop: 75,
+    backgroundColor: "black"
   },
 });
