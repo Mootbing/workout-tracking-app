@@ -3,10 +3,11 @@ import { ThemedView } from '@/components/ThemedView';
 import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 import { Link, router, useNavigation } from 'expo-router';
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Button, Image, TouchableOpacity} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Button, Image, TouchableOpacity, Alert, TextInput, Dimensions } from 'react-native';
 import { beautifyTime, displayWorkoutItenaryString, speechifyTime } from '../helper/parser';
 import * as Speech from 'expo-speech';
 import { BlurView } from 'expo-blur';
+import { LineChart } from 'react-native-chart-kit';
 
 const restRoutine = {
     name: "Rest",
@@ -22,8 +23,10 @@ const RoutineScreen = () => {
 
     //get params
     const [workoutSelected, setWorkoutSelected] = useContext(WorkoutSelectedContext);
+    const [weight, setWeight] = useState(0);
+    const [showChart, setShowChart] = useState(false);
 
-    const {category, day, routine} = workoutSelected;
+    const { category, day, routine } = workoutSelected;
 
     const [routinesLeft, setRoutinesLeft] = useState(routine);
 
@@ -45,30 +48,31 @@ const RoutineScreen = () => {
 
         if (routinesLeft.length === 0) {
             Speech.speak("Workout Completed Congratulations");
+            Alert.alert("Workout Completed Congratulations!");
             router.back();
             return;
         }
 
         Speech.speak(routinesLeft[0].name);
 
-        if (routinesLeft[0].name != "Rest" && routinesLeft[0].set){
+        if (routinesLeft[0].name != "Rest" && routinesLeft[0].set) {
             Speech.speak(routinesLeft[0].set + " sets remaining");
-            if (routinesLeft[0].rep){
-                if (routinesLeft[0].rep != -1){
+            if (routinesLeft[0].rep) {
+                if (routinesLeft[0].rep != -1) {
                     Speech.speak(routinesLeft[0].rep + " reps");
-                }else {
+                } else {
                     Speech.speak("Rep Until Failure");
                 }
             }
         }
 
-        if (routinesLeft[0].time){
+        if (routinesLeft[0].time) {
             Speech.speak(speechifyTime(routinesLeft[0].time));
 
             setTimer(routinesLeft[0].time);
         }
 
-        if (routinesLeft[0].double){
+        if (routinesLeft[0].double) {
             Speech.speak("Double");
         }
 
@@ -98,7 +102,7 @@ const RoutineScreen = () => {
     }, [timer])
 
     if (routinesLeft.length === 0) {
-        return <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <ThemedText type="subtitle">Workout Completed, Congratulations!</ThemedText>
             <Button title="Back to Home" onPress={() => router.back()} />
         </View>
@@ -113,33 +117,113 @@ const RoutineScreen = () => {
 
                         if (index === 0) {
                             return <View key={index}>
-                                <Text type="default" style={{fontSize: 75, fontWeight: 700, marginTop: 5, color: "rgba(255, 255, 255, 1)"}} >{
+                                <Text type="default" style={{ fontSize: 75, fontWeight: 700, marginTop: 5, color: "rgba(255, 255, 255, 1)" }} >{
                                     timer > 0 ? beautifyTime(timer) : displayWorkoutItenaryString(routineItem).split(" ")[0]
                                 }</Text>
-                                <ThemedText type="title" style={{marginTop: 5, fontWeight: 300, marginBottom: 25}}>{routineItem.name}</ThemedText>
-                                {/* <ThemedText type="title" style={{marginTop: 50, fontWeight: 300, marginBottom: 25}}>Playlist</ThemedText> */}
+                                <ThemedText type="title" style={{ marginTop: 5, fontWeight: 300, marginBottom: 25 }}>{routineItem.name}</ThemedText>
+                                
+                                {showChart && <View>
+                                    <LineChart
+                                        data={{
+                                        labels: ["Jan", "Feb", "Mar"],
+                                        datasets: [
+                                            {
+                                            data: [
+                                                Math.random() * 100,
+                                                Math.random() * 100,
+                                                Math.random() * 100,
+                                                Math.random() * 100,
+                                                Math.random() * 100,
+                                                Math.random() * 100
+                                            ]
+                                            }
+                                        ]
+                                        }}
+                                        width={Dimensions.get("window").width - 50} // from react-native
+                                        height={220}
+                                        yAxisSuffix="lbs"
+                                        yAxisInterval={1} // optional, defaults to 1
+                                        chartConfig={{
+                                        backgroundColor: "#000",
+                                        decimalPlaces: 0, // optional, defaults to 2dp
+                                        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                        labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                        propsForDots: {
+                                            r: "3",
+                                            strokeWidth: "2",
+                                            stroke: "rgba(255, 255, 255 0.2)"
+                                        }
+                                        }}
+                                        bezier
+                                        style={{
+                                            marginVertical: 8
+                                        }}
+                                    />
+                                </View>}
+
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 }}>
+                                    <TouchableOpacity
+                                        style={{
+                                            width: 50,
+                                            backgroundColor: showChart ?  "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 255, 0.1)", 
+                                            padding: 10, 
+                                            borderRadius: 5
+                                        }}
+
+                                        onPress={() => {
+                                            setShowChart(!showChart);
+                                        }} 
+                                    >
+                                        <Text style={{color: "rgb(135, 167, 255)", alignSelf: "center"}}>📊</Text>
+                                    </TouchableOpacity>
+
+                                    <TextInput 
+                                        keyboardType='numeric'
+                                        maxLength={10} 
+                                        placeholder="Weight (lbs)" 
+                                        placeholderTextColor={"rgba(255, 255, 255, 0.3)"}
+                                        value={weight}
+                                        onChange={(e) => setWeight(parseInt(e.nativeEvent.text))}
+                                        style={{ width: Dimensions.get("window").width - 50 - 75 - 50 - 30, backgroundColor: "rgba(255, 255, 255, 0.1)", color: "rgba(255, 255, 255, 0.5)", padding: 10, borderRadius: 5 }}
+                                    />
+                                    <TouchableOpacity
+                                        style={{
+                                            width: 75, 
+                                            backgroundColor: "rgba(255, 255, 255, 0.1)", 
+                                            padding: 10, 
+                                            borderRadius: 5
+                                        }}
+
+                                        onPress={() => {
+                                            console.log("Logged: ", weight, routineItem);
+                                            setWeight(0);
+                                        }} 
+                                    >
+                                        <Text style={{color: "rgb(135, 167, 255)", alignSelf: "center"}}>Log</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         }
 
-                        return <Pressable key={index} style={{marginBottom: 25}} onPress={() => {
+                        return <TouchableOpacity key={index} style={{ marginBottom: 25 }} onPress={() => {
                             const nowAndOn = routinesLeft.slice(index);
                             const later = routinesLeft.slice(0, index);
-                                setRoutinesLeft([...nowAndOn, ...later]);
-                                pruneRests();
-                            }}>
-                            <ThemedView darkColor='rgba(255, 255, 255, 0.1)' lightColor='rgba(0, 0, 0, 0.1)' style={{height: 1, marginBottom: 25}} />
+                            setRoutinesLeft([...nowAndOn, ...later]);
+                            pruneRests();
+                        }}>
+                            <ThemedView darkColor='rgba(255, 255, 255, 0.1)' lightColor='rgba(0, 0, 0, 0.1)' style={{ height: 1, marginBottom: 25 }} />
                             <ThemedText type="regular" darkColor='rgba(255, 255, 255, 0.5)' lightColor='rgba(0, 0, 0, 0.5)' >{displayWorkoutItenaryString(routineItem).split(" ")[0]}</ThemedText>
-                            <ThemedText type="default" style={{fontWeight: 300}}>{displayWorkoutItenaryString(routineItem).split(" ").slice(1).join(" ")}</ThemedText>
-                            <ThemedText type='default' darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)' style={{position: "absolute", right: 0, top: "50%"}}>Swap</ThemedText>
-                        </Pressable>
+                            <ThemedText type="default" style={{ fontWeight: 300 }}>{displayWorkoutItenaryString(routineItem).split(" ").slice(1).join(" ")}</ThemedText>
+                            <ThemedText type='default' darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)' style={{ position: "absolute", right: 0, top: "50%" }}>🔝</ThemedText>
+                        </TouchableOpacity>
                     })
                 }
             </View>
-            <View style={{height: 150}}></View>
+            <View style={{ height: 150 }}></View>
         </ScrollView>
-        <BlurView intensity={10} style={{position: "absolute", bottom: 0, paddingBottom: 25+15, width: "100%"}}>
-            <View style={{flexDirection: 'row', justifyContent: 'space-around', marginTop: 25}}>
-                    {routinesLeft[0].name != "Rest" && <TouchableOpacity style={{width: "30%", alignItems: "center"}} onPress={() => {
+            <BlurView intensity={10} style={{ position: "absolute", bottom: 0, paddingBottom: 25 + 15, width: "100%" }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 25 }}>
+                    {routinesLeft[0].name != "Rest" && <TouchableOpacity style={{ width: "30%", alignItems: "center" }} onPress={() => {
                         let currRoutine = routinesLeft[0];
                         currRoutine.set -= 1;
 
@@ -153,7 +237,7 @@ const RoutineScreen = () => {
                         if (currRoutine.set > 0) {
                             newItenaries = [currRoutine, ...newItenaries];
                         }
-                        
+
                         if (currRoutine.name != "Rest") {
                             newItenaries = [restRoutine, ...newItenaries];
                         }
@@ -176,7 +260,7 @@ const RoutineScreen = () => {
                         <ThemedText type='default' darkColor='rgb(255, 135, 135)' lightColor='rgb(255, 135, 135)'>Skip</ThemedText>
                     </TouchableOpacity>
                 </View>
-        </BlurView>
+            </BlurView>
         </>
     );
 };

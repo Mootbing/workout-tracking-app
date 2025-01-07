@@ -36,8 +36,6 @@ export function CSVStringToJSON(str: string) {
     }
   });
 
-  // console.log(structuredData)
-
   return structuredData;
 }
 
