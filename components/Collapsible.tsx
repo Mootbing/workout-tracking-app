@@ -18,7 +18,7 @@ export function Collapsible({ children, title, open = false, fontType = "default
         style={styles.heading}
         onPress={() => setIsOpen((value) => !value)}
         activeOpacity={0.8}>
-        <ThemedText type={isOpen ? "subtitle" : fontType}>{title}</ThemedText>
+        <ThemedText type='subtitle' style={{fontWeight: 300}}>{title}</ThemedText>
 {/* 
         <IconSymbol
           name="chevron.right"

@@ -58,6 +58,10 @@ function beautifyTime (timeInSeconds) {
   return str;
 }
 
+export function speechifyTime (timeInSeconds) {
+  return beautifyTime(timeInSeconds).replace("m", " minute").replace("s", " seconds");
+}
+
 export function displayWorkoutItenaryString (itenary) {
   // console.log(itenary);
 

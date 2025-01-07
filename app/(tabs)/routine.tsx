@@ -4,7 +4,7 @@ import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 import { Link, router, useNavigation } from 'expo-router';
 import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Button, Image, TouchableOpacity} from 'react-native';
-import { displayWorkoutItenaryString } from '../helper/parser';
+import { displayWorkoutItenaryString, speechifyTime } from '../helper/parser';
 import * as Speech from 'expo-speech';
 import { BlurView } from 'expo-blur';
 
@@ -36,17 +36,19 @@ const RoutineScreen = () => {
 
         Speech.speak(routinesLeft[0].name);
 
-        if (routinesLeft[0].name != "Rest"){
+        if (routinesLeft[0].name != "Rest" && routinesLeft[0].set){
             Speech.speak(routinesLeft[0].set + " sets remaining");
-            if (routinesLeft[0].rep != -1){
-                Speech.speak(routinesLeft[0].rep + " reps");
-            }else {
-                Speech.speak("Until Failure");
+            if (routinesLeft[0].rep){
+                if (routinesLeft[0].rep != -1){
+                    Speech.speak(routinesLeft[0].rep + " reps");
+                }else {
+                    Speech.speak("Rep Until Failure");
+                }
             }
         }
 
         if (routinesLeft[0].time){
-            Speech.speak(routinesLeft[0].time + " seconds remaining");
+            Speech.speak(speechifyTime(routinesLeft[0].time));
         }
 
         if (routinesLeft[0].double){
@@ -70,17 +72,13 @@ const RoutineScreen = () => {
                     routinesLeft.map((routineItem, index) => {
 
                         if (index === 0) {
-                            return <View style={{marginBottom: 50}}>
-                            {/* <ThemedView darkColor='rgba(255, 255, 255, 0.2)' lightColor='rgba(0, 0, 0, 0.2)' style={{ height: 1, marginTop: 25, marginBottom: 25}} /> */}
-                            <ThemedText type="title" style={{marginTop: 5}}>{routineItem.name}</ThemedText>
-                            {routineItem.name != "Rest" && <ThemedText darkColor='rgba(255, 255, 255, 0.7)' lightColor='rgba(0, 0, 0, 0.7)' type="default" style={{marginTop: 5}}>{routineItem.set} sets remaining</ThemedText>}
-                            {routineItem.rep && <ThemedText darkColor='rgba(255, 255, 255, 0.7)' lightColor='rgba(0, 0, 0, 0.7)' type="default" style={{marginTop: 5}}>
-                                {
-                                    routineItem.rep === -1 ? "Until Failure" : routineItem.rep + " reps"
-                                }    
-                            </ThemedText>}
-                            {routineItem.double && <ThemedText type="default" style={{marginTop: 5}} darkColor='rgba(255, 255, 255, 0.7)' lightColor='rgba(0, 0, 0, 0.7)' >Double</ThemedText>}
-                        </View>
+                            return <View>
+                                <Text type="default" style={{fontSize: 75, fontWeight: 700, marginTop: 5, color: "rgba(255, 255, 255, 0.5)"}} >{
+                                    displayWorkoutItenaryString(routineItem).split(" ")[0]
+                                }</Text>
+                                <ThemedText type="title" style={{marginTop: 5, fontWeight: 300, marginBottom: 25}}>{routineItem.name}</ThemedText>
+                                {/* <ThemedText type="title" style={{marginTop: 50, fontWeight: 300, marginBottom: 25}}>Playlist</ThemedText> */}
+                            </View>
                         }
 
                         return <Pressable key={index} style={{marginBottom: 25}} onPress={() => {
@@ -89,8 +87,8 @@ const RoutineScreen = () => {
                                 setRoutinesLeft([...nowAndOn, ...later]);
                             }}>
                             <ThemedView darkColor='rgba(255, 255, 255, 0.15)' lightColor='rgba(0, 0, 0, 0.15)' style={{height: 1, marginBottom: 25}} />
-                            <ThemedText type="regular" darkColor='rgba(255, 255, 255, 0.7)' lightColor='rgba(0, 0, 0, 0.7)' >{displayWorkoutItenaryString(routineItem).split(" ")[0]}</ThemedText>
-                            <ThemedText type="subtitle" style={{marginTop: 5}}>{displayWorkoutItenaryString(routineItem).split(" ").slice(1).join(" ")}</ThemedText>
+                            <ThemedText type="bold" darkColor='rgba(255, 255, 255, 0.5)' lightColor='rgba(0, 0, 0, 0.5)' >{displayWorkoutItenaryString(routineItem).split(" ")[0]}</ThemedText>
+                            <ThemedText type="default" style={{fontWeight: 300}}>{displayWorkoutItenaryString(routineItem).split(" ").slice(1).join(" ")}</ThemedText>
                             <ThemedText type='default' darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)' style={{position: "absolute", right: 0, top: "50%"}}>Swap</ThemedText>
                         </Pressable>
                     })
@@ -117,7 +115,7 @@ const RoutineScreen = () => {
                         setRoutinesLeft(newItenaries);
                     }}>
                         {/* <Image source={require('@/assets/images/play.png')} style={{width: 24, height: 24}} />  */}
-                        <ThemedText type='default' darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)'>Do Set</ThemedText>
+                        <ThemedText type='default' darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)'>Set Done</ThemedText>
                     </TouchableOpacity>}
                     {routinesLeft[0].name != "Rest" && <TouchableOpacity onPress={() => {
                         setRoutinesLeft([...routinesLeft.slice(1), routinesLeft[0]]);

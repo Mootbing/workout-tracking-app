@@ -87,7 +87,7 @@ export default function Index() {
             return <View key={index} style={{position: "relative", paddingTop: 25, borderRadius: 15}}>
               <ThemedView darkColor='rgba(255, 255, 255, 0.15)' lightColor='rgba(0, 0, 0, 0.15)' style={{ height: 1, marginBottom: 25}} />
               {item.routine.length != 0 ? <Collapsible fontType={getFontSizeByDay()} title={item.day + " - " + item.category} open={isOnCurrentDay()}>
-                 <ThemedText type='regular' darkColor="rgba(255, 255, 255, 0.7)" lightColor='rgba(0, 0, 0, 0.7)'>
+                 <ThemedText type='regular' darkColor="rgba(255, 255, 255, 0.5)" lightColor='rgba(0, 0, 0, 0.5)'>
                   {item.routine.length} exercises - {estimateWorkoutTime(item.routine)}
                 </ThemedText>
 
@@ -109,17 +109,17 @@ export default function Index() {
                     let displayStrArray = displayWorkoutItenaryString(routineItem).split(" ");
 
                     return <View key={index} style={{ flexDirection: 'column', paddingTop: 5}}>
-                      <ThemedText type='regular' style={{ paddingTop: 3}} darkColor="rgba(255, 255, 255, 0.7)" lightColor='rgba(0, 0, 0, 0.7)'>
+                      <ThemedText type="bold" style={{paddingTop: 3}} darkColor="rgba(255, 255, 255, 0.5)" lightColor='rgba(0, 0, 0, 0.5)'>
                         {displayStrArray[0] + " "} 
                       </ThemedText>
-                      <ThemedText type='defaultSemiBold' style={{paddingLeft: 0}}>
+                      <ThemedText type='default' style={{fontWeight: 300, paddingLeft: 0}}>
                         {displayStrArray.slice(1).join(" ")}
                       </ThemedText>
                     </View>
                   })}
                   {/* <Button title={"Start Day " + item.day + " Workout - " + item.category} onPress={() => {}} /> */}
                 </View>
-              </Collapsible> : <ThemedText type={getFontSizeByDay()} darkColor='rgba(255, 255, 255, 0.5)' lightColor='rgba(0, 0, 0, 0.5)'>{item.day + " - " + item.category}</ThemedText>}
+              </Collapsible> : <ThemedText type={getFontSizeByDay()} style={{fontWeight: 300}} darkColor='rgba(255, 255, 255, 0.5)' lightColor='rgba(0, 0, 0, 0.5)'>{item.day + " - " + item.category}</ThemedText>}
             </View>
           })}
         </View>}
