@@ -41,7 +41,7 @@ export function CSVStringToJSON(str: string) {
   return structuredData;
 }
 
-function beautifyTime (timeInSeconds) {
+export function beautifyTime (timeInSeconds) {
   let minutes = Math.floor(timeInSeconds / 60);
   let seconds = timeInSeconds % 60;
 
@@ -63,8 +63,6 @@ export function speechifyTime (timeInSeconds) {
 }
 
 export function displayWorkoutItenaryString (itenary) {
-  // console.log(itenary);
-
   let str = "";
 
   if (itenary.double) {

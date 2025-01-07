@@ -14,6 +14,8 @@ import { Audio } from 'expo-av';
 import { Alert } from 'react-native';
 import { router } from 'expo-router';
 
+import * as Speech from 'expo-speech';
+
 function getDaysIntoYear() {
   const now = new Date();
   const start = new Date(now.getFullYear(), 0, 0);
@@ -96,7 +98,7 @@ export default function Index() {
                   style={{ position: "absolute", right: 0, top: -25}} 
                   onPress={() => {
                     router.push("routine");
-                    setWorkoutSelected(item);
+                    setWorkoutSelected({...item});
                   }}
                 >
                   <ThemedText type='default' darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)'> Start </ThemedText>
@@ -109,7 +111,7 @@ export default function Index() {
                     let displayStrArray = displayWorkoutItenaryString(routineItem).split(" ");
 
                     return <View key={index} style={{ flexDirection: 'column', paddingTop: 5}}>
-                      <ThemedText type="bold" style={{paddingTop: 3}} darkColor="rgba(255, 255, 255, 0.5)" lightColor='rgba(0, 0, 0, 0.5)'>
+                      <ThemedText type="regular" style={{paddingTop: 3}} darkColor="rgba(255, 255, 255, 0.5)" lightColor='rgba(0, 0, 0, 0.5)'>
                         {displayStrArray[0] + " "} 
                       </ThemedText>
                       <ThemedText type='default' style={{fontWeight: 300, paddingLeft: 0}}>
