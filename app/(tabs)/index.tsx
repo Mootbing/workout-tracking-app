@@ -1,5 +1,4 @@
 import { Animated, Image, StyleSheet, Platform, ScrollView, View, Button, Text, StatusBar, Pressable, TouchableOpacity } from 'react-native';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useContext, useEffect, useRef, useState } from 'react';
@@ -9,12 +8,8 @@ import * as DocumentPicker from 'expo-document-picker';
 import {CSVStringToJSON, displayWorkoutItenaryString, estimateWorkoutTime} from '../helper/parser';
 import { Collapsible } from '@/components/Collapsible';
 import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
-
-import { Audio } from 'expo-av';
-import { Alert } from 'react-native';
 import { router, useNavigation } from 'expo-router';
-
-import * as Speech from 'expo-speech';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function getDaysIntoYear() {
   const now = new Date();
@@ -28,6 +23,8 @@ function getDaysIntoYear() {
 export default function Index() {
   const [day, setDay] = useState(0);//retrieve from localstorage later
 
+  const [lastFile, setLastFile] = useState(null);
+
   const [data, setData] = useState([]);
   const [title, setTitle] = useState("Workout Tracker");
 
@@ -39,28 +36,33 @@ export default function Index() {
 
   const navigation = useNavigation();
 
+  const setDataFromAsset = async (asset) => {
+    const contents = await FileSystem.readAsStringAsync(asset.uri);
+    const d = CSVStringToJSON(contents);
+
+    setData(d);
+    setDay(getDaysIntoYear() % d.length);
+    
+    setLastFile(null);
+    navigation.setOptions({ title: asset.name + " - " + d.length + " Days" });
+
+    try {
+      await AsyncStorage.setItem('last-file', JSON.stringify(asset));
+    } catch (e) {
+      // saving error
+    }
+  }
+
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: 'text/csv',
       });
 
-      // console.log(result);
-
       if (result.assets) {
-
         const asset = result.assets[0];
-
-        const contents = await FileSystem.readAsStringAsync(asset.uri);
-
-        const d = CSVStringToJSON(contents);
-
-        setData(d);
-
-        // setDay(23);/
-        setDay(getDaysIntoYear() % d.length);
-
-        navigation.setOptions({ title: asset.name + " - " + d.length + " Days" });
+        
+        setDataFromAsset(asset);
       }
     } catch (err) {
       console.log(err.message);
@@ -75,6 +77,21 @@ export default function Index() {
     }
   }, [data]);
 
+  useEffect(() => {
+    let fetchFile = async () => {
+      try {
+        const value = await AsyncStorage.getItem('last-file');
+        if (value !== null) {
+          setLastFile(JSON.parse(value));
+        }
+      } catch (e) {
+        // error reading value
+      }
+    }
+
+    fetchFile();
+  }, [])
+
   return (
     // <ThemedView style={{ }}>
       <Animated.ScrollView style={styles.container} ref={scrollViewRef}>
@@ -85,6 +102,11 @@ export default function Index() {
           <TouchableOpacity onPress={pickDocument}>
             <ThemedText type="default" darkColor='rgb(255, 130, 130)' lightColor='rgb(255, 130, 130)'>Upload Workout CSV</ThemedText>
           </TouchableOpacity>
+          {(lastFile) && <TouchableOpacity onPress={() => {
+            setDataFromAsset(lastFile);
+          }}>
+            <ThemedText type="default" darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)'>Use Last File</ThemedText>
+          </TouchableOpacity>}
           {data.length != 0 && <TouchableOpacity onPress={() => {
             setPeekAll(!peekAll);
           }}>
@@ -106,10 +128,10 @@ export default function Index() {
 
                 {/* <Link href="routine" asChild> */}
                 <Pressable 
-                  style={{ position: "absolute", right: 0, top: -25}} 
+                  style={{ position: "absolute", right: 0, top: -25, height: 50, justifyContent: 'center'}} 
                   onPress={() => {
                     router.push("routine");
-                    setWorkoutSelected({...item});
+                    setWorkoutSelected(JSON.parse(JSON.stringify(item)));
                   }}
                 >
                   <ThemedText type='default' darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)'> Start </ThemedText>
