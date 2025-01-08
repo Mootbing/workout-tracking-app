@@ -7,10 +7,10 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Button, Image, Touchable
 import { beautifyTime, deleteLastDataPointFromSave, displayWorkoutItenaryString, getWorkoutDataFromSave, getWorkoutSaveURIIfExistsOrMakeNew, importDataToSave, makeSaveURI, pickDocument, pruneLog, speechifyTime, updateWorkoutDataToSave } from '../helper/parser';
 import * as Speech from 'expo-speech';
 import { BlurView } from 'expo-blur';
-import { LineChart } from 'react-native-chart-kit';
 
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LineChart } from 'react-native-gifted-charts';
 
 const restRoutine = {
     name: "Rest",
@@ -29,7 +29,7 @@ const RoutineScreen = () => {
 
     const [loggableStat, setLoggableStat] = useState(0);
     const [showChart, setShowChart] = useState(false);
-    const [chartData, setChartData] = useState({});
+    const [chartData, setChartData] = useState([]);
 
     const { category, day, routine } = workoutSelected;
 
@@ -47,22 +47,35 @@ const RoutineScreen = () => {
             // console.log(data.map((item) => item.timeStamp))
             // console.log(data.map((item) => item.num))
             if (data.length != 0) {
-                setChartData({
-                    labels: data.slice(-7).map(
-                        (item) => {
-                            let date = new Date(item.timeStamp);
-                            return date.toLocaleDateString().split("/").slice(0, 2).join("/");
-                        }
-                    ),
-                    datasets: [
-                        {
-                            data: data.slice(-7).map((item) => item.num)
-                        }
-                    ]
-                });
+                //for old chartAPI
+                // setChartData({
+                //     labels: data.slice(-7).map(
+                //         (item) => {
+                //             let date = new Date(item.timeStamp);
+                //             return date.toLocaleDateString().split("/").slice(0, 2).join("/");
+                //         }
+                //     ),
+                //     datasets: [
+                //         {
+                //             data: data.slice(-7).map((item) => item.num)
+                //         }
+                //     ]
+                // });
+
+                //for new chartAPI
+                setChartData(data.slice(-7).map((item) => {
+                    let date = new Date(item.timeStamp);
+                    date = date.toLocaleDateString().split("/").slice(0, 2).join("/");
+
+                    return {
+                        value: item.num,
+                        dataPointText: item.num.toString(),
+                        label: date
+                    }
+                }));
             }
             else {
-                setChartData({});
+                setChartData([]);
                 // setShowChart(false);
             }
         })
@@ -106,7 +119,7 @@ const RoutineScreen = () => {
             return;
         }
 
-        
+        setChartData([]);
         fetchChartDataFor(routinesLeft[0]);
         Speech.speak(routinesLeft[0].name);
 
@@ -228,29 +241,78 @@ const RoutineScreen = () => {
                                     </View>
 
                                     {showChart && <View>
-                                        {Object.keys(chartData).length != 0 && <LineChart
-                                            data={chartData}
-                                            width={Dimensions.get("window").width - 50} // from react-native
-                                            height={Dimensions.get("window").height * 0.3}
-                                            yAxisInterval={1} // optional, defaults to 1
-                                            chartConfig={{
-                                                backgroundColor: "#000",
-                                                decimalPlaces: 0, // optional, defaults to 2dp
-                                                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                                                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                                                propsForDots: {
-                                                    r: "3"
-                                                }
+                                        {chartData.length != 0 && 
+                                        // <LineChart
+                                        //     data={chartData}
+                                        //     width={Dimensions.get("window").width - 50} // from react-native
+                                        //     height={Dimensions.get("window").height * 0.3}
+                                        //     yAxisInterval={1} // optional, defaults to 1
+                                        //     chartConfig={{
+                                        //         backgroundColor: "#000",
+                                        //         decimalPlaces: 0, // optional, defaults to 2dp
+                                        //         color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                        //         labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                                        //         propsForDots: {
+                                        //             r: "3"
+                                        //         }
+                                        //     }}
+                                        //     bezier
+                                        // />}
+                                        <LineChart
+
+                                            areaChart
+                                            startFillColor="rgb(255, 255, 255)"
+                                            startOpacity={0.15}
+                                            endFillColor="rgb(255, 255, 255)"
+                                            endOpacity={0}
+
+                                            spacing={(Dimensions.get("window").width - 100) / chartData.length}
+
+                                            width={Dimensions.get("window").width - 100}
+                                            data={
+                                                chartData
+                                            }
+                                            thickness={2}
+                                            
+                                            curved
+                                            // hideOrigin
+
+                                            dataPointsColor='rgba(255, 255, 255, 0.7)'
+
+                                            textShiftX={10}
+                                            textShiftY={0}
+                                            textColor='rgba(255, 255, 255, 1)'
+                                            noOfSections={5}
+
+                                            // initialSpacing={0}
+
+                                            xAxisType='dashed'
+
+                                            xAxisLabelTextStyle={{
+                                                color: "rgba(255, 255, 255, 0.5)",
+                                                fontSize: 12
                                             }}
-                                            bezier
-                                            style={{
-                                                marginVertical: 8
+                                            rulesColor={"rgba(255, 255, 255, 0.2)"}
+                                            
+                                            xAxisColor={"rgba(255, 255, 255, 0.2)"}
+                                            yAxisColor="rgba(255, 255, 255, 0)"
+                                            yAxisTextStyle={{
+                                                color: "rgba(255, 255, 255, 0.5)",
+                                                fontSize: 12
                                             }}
+
+                                            yAxisOffset={chartData.map((item) => item.value).reduce((a, b) => Math.min(a, b), 1e9) - 5}
+                                            // yAxisExtraHeight={20}
+
+                                            verticalLinesStrokeDashArray={[5, 5]}
+                                            showVerticalLines
+                                            verticalLinesColor="rgba(255,255,255,0.2)"
+                                            color="rgba(255, 255, 255, 0.25)"
                                         />}
                                     </View>}
 
-                                    {showChart && <View style={{ flexDirection: 'row', gap: 10, marginBottom: 25 }}>
-                                        {Object.keys(chartData).length != 0 && <TouchableOpacity
+                                    {showChart && <View style={{ flexDirection: 'row', gap: 10, marginBottom: 25, marginTop: 10}}>
+                                        {chartData.length != 0 && <TouchableOpacity
                                             style={{
                                                 backgroundColor: "rgba(255, 255, 255, 0.1)",
                                                 padding: 10,
@@ -287,7 +349,7 @@ const RoutineScreen = () => {
                                             <Text style={{ color: "rgb(255, 235, 135)", alignSelf: "center" }}>Import</Text>
                                         </TouchableOpacity>
 
-                                        {Object.keys(chartData).length != 0 && <TouchableOpacity
+                                        {chartData.length != 0 && <TouchableOpacity
                                             style={{
                                                 backgroundColor: "rgba(255, 255, 255, 0.1)",
                                                 padding: 10,
@@ -302,7 +364,7 @@ const RoutineScreen = () => {
                                             <Text style={{ color: "rgb(255, 135, 135)", alignSelf: "center" }}>Backspace</Text>
                                         </TouchableOpacity>}
 
-                                        {Object.keys(chartData).length != 0 && <TouchableOpacity
+                                        {chartData.length != 0 && <TouchableOpacity
                                             style={{
                                                 backgroundColor: "rgba(255, 255, 255, 0.1)",
                                                 padding: 10,
@@ -321,7 +383,7 @@ const RoutineScreen = () => {
                                                 {
                                                 text: "OK", onPress: async () => {
                                                         pruneLog(routineItem).then(() => {
-                                                            setChartData({});
+                                                            setChartData([]);
                                                             setShowChart(false);
                                                         });
                                                     }

@@ -112,7 +112,7 @@ export function estimateWorkoutTime (workout) {
 //saves and loads of data
 
 export const makeSaveURI = (workoutName) => {
-  return FileSystem.documentDirectory + "Logs_" + workoutName + ".csv"
+  return FileSystem.documentDirectory + "Logs_" + workoutName.replace("\n", "-") + ".csv"
 }
 
 export const getWorkoutSaveURIIfExistsOrMakeNew = async (uri) => {
