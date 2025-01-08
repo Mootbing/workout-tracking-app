@@ -10,6 +10,7 @@ import { BlurView } from 'expo-blur';
 import { LineChart } from 'react-native-chart-kit';
 
 import * as Sharing from 'expo-sharing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const restRoutine = {
     name: "Rest",
@@ -73,12 +74,10 @@ const RoutineScreen = () => {
             return;
         }
 
-        console.log(routineItem.name)
-        console.log("Setting")
-
         updateWorkoutDataToSave(routineItem, loggableStat).then(() => {
             fetchChartDataFor(routineItem);
             setShowChart(true);
+            setLoggableStat(0);
         })
     }
 
@@ -94,19 +93,21 @@ const RoutineScreen = () => {
 
     useEffect(() => {
 
-        setShowChart(false);
-        setChartData({});
-
         Speech.stop();
         setTimer(-1);
 
         if (routinesLeft.length === 0) {
             Speech.speak("Workout Completed Congratulations");
             Alert.alert("Workout Completed!");
+
+            AsyncStorage.setItem('day-streak', (parseInt(day) + 1).toString());
+
             router.back();
             return;
         }
 
+        
+        fetchChartDataFor(routinesLeft[0]);
         Speech.speak(routinesLeft[0].name);
 
         if (routinesLeft[0].name != "Rest" && routinesLeft[0].set) {
@@ -220,7 +221,6 @@ const RoutineScreen = () => {
 
                                             onPress={() => {
                                                 setChartDataFor(routineItem);
-                                                setLoggableStat(0);
                                             }}
                                         >
                                             <Text style={{ color: "rgb(135, 167, 255)", alignSelf: "center" }}>Log</Text>

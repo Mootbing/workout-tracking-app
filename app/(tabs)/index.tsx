@@ -20,7 +20,7 @@ function getDaysIntoYear() {
 }
 
 export default function Index() {
-  const [day, setDay] = useState(0);//retrieve from localstorage later
+  const [day, setDay] = useState(1);//retrieve from localstorage later
 
   const [data, setData] = useState([]);
   const [title, setTitle] = useState("Workout Tracker");
@@ -38,7 +38,6 @@ export default function Index() {
     const d = CSVStringToJSON(contents);
 
     setData(d);
-    setDay(getDaysIntoYear() % d.length);
 
     navigation.setOptions({ title: asset.name + " - " + d.length + " Days" });
 
@@ -53,24 +52,28 @@ export default function Index() {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({
         y:
-          73.5 * day
+          73.5 * day + 165
         , animated: true
       });
     }
   }, [data]);
 
-  useEffect(() => {
-    let fetchFile = async () => {
-      try {
-        const value = await AsyncStorage.getItem('last-file');
-        if (value !== null) {
-          setDataFromAsset(JSON.parse(value));
-        }
-      } catch (e) {
-        // error reading value
+  let fetchFile = async () => {
+    try {
+      const value = await AsyncStorage.getItem('last-file');
+      if (value !== null) {
+        setDataFromAsset(JSON.parse(value));
       }
+      const day = await AsyncStorage.getItem('day-streak');
+      if (day !== null) {
+        setDay(parseInt(day));
+      }
+    } catch (e) {
+      // error reading value
     }
+  }
 
+  useEffect(() => {
     fetchFile();
   }, [])
 
@@ -89,6 +92,31 @@ export default function Index() {
           })
         }}>
           <ThemedText type="default">Upload Workout CSV</ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => {
+          Alert.alert(
+            "Reset Day Counter",
+            "Are you sure you want to reset workout counter?",
+            [
+              {
+                text: "Cancel",
+                onPress: () => console.log("Cancel Pressed"),
+                style: "cancel"
+              },
+              {
+                text: "OK", onPress: async () => {
+                  setDay(1);
+                  try {
+                    await AsyncStorage.setItem('day-streak', "1");
+                  } catch (e) {
+                    // saving error
+                  }
+                }
+              }
+            ]
+          );
+        }}>
+          <ThemedText type="default" darkColor='rgb(255, 130, 130)' lightColor='rgb(255, 130, 130)'>Reset Day Counter</ThemedText>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => {
           Alert.alert(
