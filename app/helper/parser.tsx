@@ -1,6 +1,8 @@
 
 import { readString } from 'react-native-csv'
 import * as FileSystem from 'expo-file-system';
+import * as DocumentPicker from 'expo-document-picker';
+import { Alert } from 'react-native';
 
 export function CSVStringToJSON(str: string) {
 
@@ -139,6 +141,26 @@ export const updateWorkoutDataToSave = async (itenary, data) => {
   );
 }
 
+export const deleteLastDataPointFromSave = async (itenary) => {
+  let contents = await FileSystem.readAsStringAsync(
+    await getWorkoutSaveURIIfExistsOrMakeNew(makeSaveURI(itenary.name))
+  );
+
+  const data = CSVStringToJSONForSaves(contents);
+
+  data.pop();
+
+  let newContents = "Timestamp, Numerical Data, String";
+  data.forEach((row) => {
+    newContents += "\n" + row.timeStamp + ", " + row.num + ", " + row.string;
+  });
+
+  await FileSystem.writeAsStringAsync(
+    makeSaveURI(itenary.name),
+    newContents
+  );
+}
+
 export const getWorkoutDataFromSave = async (itenary) => {
   const contents = await FileSystem.readAsStringAsync(
     await getWorkoutSaveURIIfExistsOrMakeNew(makeSaveURI(itenary.name))
@@ -152,16 +174,22 @@ const CSVStringToJSONForSaves = (str: string) => {
   const data: Array<Array<string>> = readString(str).data;
   const structuredData : Array<Map<string, number>> = [];
 
-  data.forEach((row: Array<string>, index: number) => {
-    if (index === 0) { return; } //1st row declared as header
+  try{
+    data.forEach((row: Array<string>, index: number) => {
+      if (index === 0) { return; } //1st row declared as header
 
-    const current = {
-      timeStamp: parseFloat(row[0]),
-      num: parseFloat(row[1]),
-    }
+      const current = {
+        timeStamp: parseFloat(row[0]),
+        num: parseFloat(row[1]),
+      }
 
-    structuredData.push(current);
-  });
+      structuredData.push(current);
+    });
+  }
+  catch (e) {
+    Alert.alert("Error parsing logfile", e);
+    return [];
+  }
 
   return structuredData;
 }
@@ -177,4 +205,43 @@ export const pruneLogs = async () => {
       FileSystem.deleteAsync(FileSystem.documentDirectory + file);
     }
   });
+
+  Alert.alert("Logs pruned");
+}
+
+export const pruneLog = async (itenary) => {
+  await FileSystem.deleteAsync(makeSaveURI(itenary.name));
+  Alert.alert(itenary.name + " log pruned");
+}
+
+
+export const pickDocument = async () => {
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'text/csv',
+    });
+
+    if (result.assets) {
+      const asset = result.assets[0];
+      return asset;
+    }
+  } catch (err) {
+    Alert.alert("Error picking files", err.message);
+  }
+
+  return null;
+};
+
+export const importDataToSave = async (itenary) => {
+  let data = await pickDocument();
+
+  const content = await FileSystem.readAsStringAsync(data.uri);
+
+  // make sure first and second column of every row after first is numerical
+  CSVStringToJSONForSaves(content)
+
+  await FileSystem.writeAsStringAsync(
+    makeSaveURI(itenary.name),
+    content
+  );
 }

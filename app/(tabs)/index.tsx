@@ -3,9 +3,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useContext, useEffect, useRef, useState } from 'react';
 import * as FileSystem from 'expo-file-system';
-import * as DocumentPicker from 'expo-document-picker';
 
-import { CSVStringToJSON, displayWorkoutItenaryString, estimateWorkoutTime, pruneLogs } from '../helper/parser';
+import { CSVStringToJSON, displayWorkoutItenaryString, estimateWorkoutTime, pickDocument, pruneLogs } from '../helper/parser';
 import { Collapsible } from '@/components/Collapsible';
 import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 import { router, useNavigation } from 'expo-router';
@@ -22,8 +21,6 @@ function getDaysIntoYear() {
 
 export default function Index() {
   const [day, setDay] = useState(0);//retrieve from localstorage later
-
-  const [lastFile, setLastFile] = useState(null);
 
   const [data, setData] = useState([]);
   const [title, setTitle] = useState("Workout Tracker");
@@ -43,7 +40,6 @@ export default function Index() {
     setData(d);
     setDay(getDaysIntoYear() % d.length);
 
-    setLastFile(null);
     navigation.setOptions({ title: asset.name + " - " + d.length + " Days" });
 
     try {
@@ -52,22 +48,6 @@ export default function Index() {
       // saving error
     }
   }
-
-  const pickDocument = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: 'text/csv',
-      });
-
-      if (result.assets) {
-        const asset = result.assets[0];
-
-        setDataFromAsset(asset);
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  };
 
   useEffect(() => {
     if (scrollViewRef.current) {
@@ -84,7 +64,7 @@ export default function Index() {
       try {
         const value = await AsyncStorage.getItem('last-file');
         if (value !== null) {
-          setLastFile(JSON.parse(value));
+          setDataFromAsset(JSON.parse(value));
         }
       } catch (e) {
         // error reading value
@@ -101,14 +81,15 @@ export default function Index() {
           <ThemedText type="title">{title}</ThemedText>
         </View> */}
       <View style={{ flexDirection: 'column', gap: 25, justifyContent: "flex-end", alignItems: "flex-end" }}>
-        <TouchableOpacity onPress={pickDocument}>
+        <TouchableOpacity onPress={() => {
+          pickDocument().then((asset) => {
+            if (asset) {
+              setDataFromAsset(asset);
+            }
+          })
+        }}>
           <ThemedText type="default">Upload Workout CSV</ThemedText>
         </TouchableOpacity>
-        {(lastFile) && <TouchableOpacity onPress={() => {
-          setDataFromAsset(lastFile);
-        }}>
-          <ThemedText type="default" darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)'>Use Last File</ThemedText>
-        </TouchableOpacity>}
         <TouchableOpacity onPress={() => {
           Alert.alert(
             "Prune Saved Logs",
