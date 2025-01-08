@@ -4,10 +4,12 @@ import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 import { Link, router, useNavigation } from 'expo-router';
 import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Button, Image, TouchableOpacity, Alert, TextInput, Dimensions } from 'react-native';
-import { beautifyTime, displayWorkoutItenaryString, speechifyTime } from '../helper/parser';
+import { beautifyTime, displayWorkoutItenaryString, getWorkoutDataFromSave, getWorkoutSaveURIIfExistsOrMakeNew, makeSaveURI, speechifyTime, updateWorkoutDataToSave } from '../helper/parser';
 import * as Speech from 'expo-speech';
 import { BlurView } from 'expo-blur';
 import { LineChart } from 'react-native-chart-kit';
+
+import * as Sharing from 'expo-sharing';
 
 const restRoutine = {
     name: "Rest",
@@ -25,24 +27,24 @@ const RoutineScreen = () => {
     const [workoutSelected, setWorkoutSelected] = useContext(WorkoutSelectedContext);
 
     const [loggableStat, setLoggableStat] = useState(0);
-    const [showChart, setShowChart] = useState(true);
-    const [chartData, setShowChartData] = useState({
-        labels: ["Jan", "Feb", "Mar"],
-        datasets: [
-            {
-                data: [
-                    Math.random() * 100,
-                    Math.random() * 100,
-                    Math.random() * 100,
-                    Math.random() * 100,
-                    Math.random() * 100,
-                    Math.random() * 100
-                ]
-            }
-        ]
+    const [showChart, setShowChart] = useState(false);
+    const [chartData, setChartData] = useState({
+        // labels: ["Jan", "Feb", "Mar"],
+        // datasets: [
+        //     {
+        //         data: [
+        //             Math.random() * 100,
+        //             Math.random() * 100,
+        //             Math.random() * 100,
+        //             Math.random() * 100,
+        //             Math.random() * 100,
+        //             Math.random() * 100
+        //         ]
+        //     }
+        // ]
     });
 
-    const { category, day, routine } = workoutSelected;
+    const {category, day, routine } = workoutSelected;
 
     const [routinesLeft, setRoutinesLeft] = useState(routine);
 
@@ -50,12 +52,49 @@ const RoutineScreen = () => {
 
     const fetchChartDataFor = (routineItem) => {
         console.log(routineItem.name)
+        console.log("Fetching")
 
-        Alert.alert("No data exists. Log some data to see the chart.");
+        getWorkoutDataFromSave(routineItem).then((data) => {
+            console.log(data)
+
+            // console.log(data.map((item) => item.timeStamp))
+            // console.log(data.map((item) => item.num))
+            if (data.length != 0) {
+                setChartData({
+                    labels: data.slice(-7).map(
+                        (item) => {
+                            let date = new Date(item.timeStamp);
+                            return date.toLocaleDateString().split("/").slice(0, 2).join("/");
+                        }
+                    ),
+                    datasets: [
+                        {
+                            data: data.slice(-7).map((item) => item.num)
+                        }
+                    ]
+                });
+            }
+            else {
+                Alert.alert("No data exists. Log some data to see the chart.");
+                setChartData({});
+                setShowChart(false);
+            }
+        })
     }
 
     const setChartDataFor = (routineItem) => {
 
+        if (loggableStat == "") {
+            return;
+        }
+
+        console.log(routineItem.name)
+        console.log("Setting")
+
+        updateWorkoutDataToSave(routineItem, loggableStat).then(() => {
+            fetchChartDataFor(routineItem);
+            setShowChart(true);
+        })
     }
 
     const pruneRests = () => {
@@ -69,6 +108,10 @@ const RoutineScreen = () => {
     }
 
     useEffect(() => {
+
+        setShowChart(false);
+        setChartData({});
+
         Speech.stop();
         setTimer(-1);
 
@@ -172,9 +215,8 @@ const RoutineScreen = () => {
                                     </View>}
 
                                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 }}>
-                                        <TouchableOpacity
+                                    <TouchableOpacity
                                             style={{
-                                                width: 50,
                                                 backgroundColor: showChart ?  "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 255, 0.1)", 
                                                 padding: 10, 
                                                 borderRadius: 5
@@ -193,6 +235,27 @@ const RoutineScreen = () => {
                                             <Text style={{color: "rgb(135, 167, 255)", alignSelf: "center"}}>📊</Text>
                                         </TouchableOpacity>
 
+                                        <TouchableOpacity
+                                            style={{
+                                                backgroundColor: "rgba(255, 255, 255, 0.1)", 
+                                                padding: 10, 
+                                                borderRadius: 5
+                                            }}
+
+                                            onPress={() => {
+                                                getWorkoutSaveURIIfExistsOrMakeNew(
+                                                    makeSaveURI(routineItem.name)
+                                                ).then((uri) => {
+                                                    console.log(uri)
+                                                    Sharing.shareAsync(
+                                                        uri 
+                                                    )
+                                                })
+                                            }} 
+                                        >
+                                            <Text style={{color: "rgb(135, 167, 255)", alignSelf: "center"}}>📤</Text>
+                                        </TouchableOpacity>
+
                                         <TextInput 
                                             keyboardType='numeric'
                                             placeholder="Loggable (Numeric) Stats: Weight, Time, etc." 
@@ -203,7 +266,7 @@ const RoutineScreen = () => {
                                                     setLoggableStat(e.replaceAll(/[^0-9]/g, ''));
                                                 }
                                             }
-                                            style={{ width: Dimensions.get("window").width - 50 - 75 - 50 - 30, backgroundColor: "rgba(255, 255, 255, 0.1)", color: "rgba(255, 255, 255, 0.5)", padding: 10, borderRadius: 5 }}
+                                            style={{ width: Dimensions.get("window").width - 50 - 75 - 70 - 30, backgroundColor: "rgba(255, 255, 255, 0.1)", color: "rgba(255, 255, 255, 0.5)", padding: 10, borderRadius: 5 }}
                                         />
                                         <TouchableOpacity
                                             style={{

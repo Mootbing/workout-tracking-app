@@ -1,5 +1,6 @@
 
 import { readString } from 'react-native-csv'
+import * as FileSystem from 'expo-file-system';
 
 export function CSVStringToJSON(str: string) {
 
@@ -106,10 +107,74 @@ export function estimateWorkoutTime (workout) {
   return beautifyTime(time).split("m")[0] + " minutes";
 }
 
-// const saveURI = FileSystem.document
+//saves and loads of data
 
-// exoprt const saveWorkoutToCSV = 
+export const makeSaveURI = (workoutName) => {
+  return FileSystem.documentDirectory + "Logs_" + workoutName + ".csv"
+}
 
-export const getWorkoutFromCSV = (itenaryName) => {
+export const getWorkoutSaveURIIfExistsOrMakeNew = async (uri) => {
+  const file = await FileSystem.getInfoAsync(uri);
 
+  if (!file.exists) {
+    await FileSystem.writeAsStringAsync(uri, "Timestamp, Numerical Data, String");
+  }
+
+  // await FileSystem.writeAsStringAsync(uri, "Timestamp, Numerical Data, String");
+
+  return file.uri;
+}
+
+export const updateWorkoutDataToSave = async (itenary, data) => {
+  let contents = await FileSystem.readAsStringAsync(
+    await getWorkoutSaveURIIfExistsOrMakeNew(makeSaveURI(itenary.name))
+  );
+
+  const time = new Date().getTime();
+  contents += "\n" + time + ", " + data + ", " + displayWorkoutItenaryString(itenary).split(" ")[0];
+
+  await FileSystem.writeAsStringAsync(
+    makeSaveURI(itenary.name),
+    contents
+  );
+}
+
+export const getWorkoutDataFromSave = async (itenary) => {
+  const contents = await FileSystem.readAsStringAsync(
+    await getWorkoutSaveURIIfExistsOrMakeNew(makeSaveURI(itenary.name))
+  );
+
+  return CSVStringToJSONForSaves(contents);
 } 
+
+const CSVStringToJSONForSaves = (str: string) => {
+  //format is timestamp, numerical data, string data
+  const data: Array<Array<string>> = readString(str).data;
+  const structuredData : Array<Map<string, number>> = [];
+
+  data.forEach((row: Array<string>, index: number) => {
+    if (index === 0) { return; } //1st row declared as header
+
+    const current = {
+      timeStamp: parseFloat(row[0]),
+      num: parseFloat(row[1]),
+    }
+
+    structuredData.push(current);
+  });
+
+  return structuredData;
+}
+
+export const pruneLogs = async () => {
+  const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory);
+
+  files.forEach(async (file) => {
+    if (file.includes("Logs")) {
+      console.log(file);
+      console.log("deleting")
+    
+      FileSystem.deleteAsync(FileSystem.documentDirectory + file);
+    }
+  });
+}

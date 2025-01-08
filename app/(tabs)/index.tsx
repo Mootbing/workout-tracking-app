@@ -1,11 +1,11 @@
-import { Animated, Image, StyleSheet, Platform, ScrollView, View, Button, Text, StatusBar, Pressable, TouchableOpacity } from 'react-native';
+import { Animated, Image, StyleSheet, Platform, ScrollView, View, Button, Text, StatusBar, Pressable, TouchableOpacity, Alert } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useContext, useEffect, useRef, useState } from 'react';
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 
-import { CSVStringToJSON, displayWorkoutItenaryString, estimateWorkoutTime } from '../helper/parser';
+import { CSVStringToJSON, displayWorkoutItenaryString, estimateWorkoutTime, pruneLogs } from '../helper/parser';
 import { Collapsible } from '@/components/Collapsible';
 import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 import { router, useNavigation } from 'expo-router';
@@ -100,15 +100,35 @@ export default function Index() {
       {/* <View>
           <ThemedText type="title">{title}</ThemedText>
         </View> */}
-      <View style={{ flexDirection: 'row', gap: 10 }}>
+      <View style={{ flexDirection: 'column', gap: 25, justifyContent: "flex-end", alignItems: "flex-end" }}>
         <TouchableOpacity onPress={pickDocument}>
-          <ThemedText type="default" darkColor='rgb(255, 130, 130)' lightColor='rgb(255, 130, 130)'>Upload Workout CSV</ThemedText>
+          <ThemedText type="default">Upload Workout CSV</ThemedText>
         </TouchableOpacity>
         {(lastFile) && <TouchableOpacity onPress={() => {
           setDataFromAsset(lastFile);
         }}>
           <ThemedText type="default" darkColor='rgb(135, 255, 183)' lightColor='rgb(135, 255, 183)'>Use Last File</ThemedText>
         </TouchableOpacity>}
+        <TouchableOpacity onPress={() => {
+          Alert.alert(
+            "Prune Saved Logs",
+            "Are you sure you want to prune all saved logs?",
+            [
+              {
+                text: "Cancel",
+                onPress: () => console.log("Cancel Pressed"),
+                style: "cancel"
+              },
+              {
+                text: "OK", onPress: async () => {
+                  pruneLogs();
+                }
+              }
+            ]
+          );
+        }}>
+          <ThemedText type="default" darkColor='rgb(255, 130, 130)' lightColor='rgb(255, 130, 130)'>Prune Saved Logs</ThemedText>
+        </TouchableOpacity>
         {data.length != 0 && <TouchableOpacity onPress={() => {
           setPeekAll(!peekAll);
         }}>
