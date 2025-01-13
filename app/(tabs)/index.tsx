@@ -1,14 +1,17 @@
-import { Animated, Image, StyleSheet, Platform, ScrollView, View, Button, Text, StatusBar, Pressable, TouchableOpacity, Alert } from 'react-native';
+import { Animated, Image, StyleSheet, Platform, ScrollView, View, Button, Text, StatusBar, Pressable, TouchableOpacity, Alert, Modal, Dimensions } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useContext, useEffect, useRef, useState } from 'react';
 import * as FileSystem from 'expo-file-system';
 
-import { CSVStringToJSON, displayWorkoutItenaryString, estimateWorkoutTime, pickDocument, pruneLogs } from '../helper/parser';
+import { CSVStringToJSON, displayWorkoutItenaryString, estimateWorkoutTime, getAllGraphs, pickDocument, pruneLogs } from '../helper/parser';
 import { Collapsible } from '@/components/Collapsible';
 import { WorkoutSelectedContext } from '@/hooks/useWorkoutSelectedContext';
 import { router, useNavigation } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BlurView } from 'expo-blur';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LineChart } from 'react-native-gifted-charts';
 
 function getDaysIntoYear() {
   const now = new Date();
@@ -26,11 +29,11 @@ export default function Index() {
   const [title, setTitle] = useState("Workout Tracker");
 
   const [peekAll, setPeekAll] = useState(false);
-
   const scrollViewRef = useRef<Animated.ScrollView>(null);
-
   const [workoutSelected, setWorkoutSelected] = useContext(WorkoutSelectedContext);
 
+  const [showAllGraphs, setShowAllGraphs] = useState(false);
+  const [graphs, setGraphs] = useState([]);
   const navigation = useNavigation();
 
   const setDataFromAsset = async (asset) => {
@@ -77,6 +80,42 @@ export default function Index() {
     fetchFile();
   }, [])
 
+  useEffect(() => {
+    if (showAllGraphs) {
+      // somehow backwards
+      return;
+    }
+
+    getAllGraphs().then((graphsData) => {
+      // Filter out undefined entries and format the data
+      let formattedGraphData = graphsData
+        .filter((graph): graph is {name: string, data: Array<{timeStamp: number, num: number}>} => {
+          return graph !== undefined && graph.data !== undefined;
+        })
+        .map((graph) => {
+          return {
+            name: graph.name,
+            data: graph.data.slice(-7).map((item) => {
+              const date = new Date(item.timeStamp)
+                .toLocaleDateString()
+                .split("/")
+                .slice(0, 2)
+                .join("/");
+
+              return {
+                value: item.num,
+                dataPointText: item.num.toString(),
+                label: date
+              }
+            })
+          }
+        });
+
+      console.log(formattedGraphData);
+      setGraphs(formattedGraphData);
+    });
+  }, [showAllGraphs]);
+
   return (
     // <ThemedView style={{ }}>
     <Animated.ScrollView style={styles.container} ref={scrollViewRef}>
@@ -91,7 +130,7 @@ export default function Index() {
             }
           })
         }}>
-          <ThemedText type="default">Upload Workout CSV</ThemedText>
+          <ThemedText type="default" darkColor='rgb(255, 130, 130)' lightColor='rgb(255, 130, 130)'>Upload Workout CSV</ThemedText>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => {
           Alert.alert(
@@ -111,7 +150,8 @@ export default function Index() {
                   } catch (e) {
                     // saving error
                   }
-                }
+                },
+                style: "destructive"
               }
             ]
           );
@@ -131,7 +171,8 @@ export default function Index() {
               {
                 text: "OK", onPress: async () => {
                   pruneLogs();
-                }
+                },
+                style: "destructive"
               }
             ]
           );
@@ -141,9 +182,15 @@ export default function Index() {
         {data.length != 0 && <TouchableOpacity onPress={() => {
           setPeekAll(!peekAll);
         }}>
-          <ThemedText type="default" darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)'>{!peekAll ? "Reveal" : "Hide"} All</ThemedText>
+          <ThemedText type="default" darkColor='rgb(255, 255, 255)' lightColor='rgb(255, 255, 255)'>{!peekAll ? "Reveal" : "Hide"} All</ThemedText>
         </TouchableOpacity>}
+        <TouchableOpacity onPress={() => {
+          setShowAllGraphs(!showAllGraphs);
+        }}>
+          <ThemedText type="default" darkColor='rgb(255, 255, 255)' lightColor='rgb(255, 255, 255)'>Show Progression Graphs</ThemedText>
+        </TouchableOpacity>
       </View>
+
       {data.length != 0 && <View>
         {data.map((item, index) => {
 
@@ -190,6 +237,91 @@ export default function Index() {
         })}
       </View>}
       <View style={{ height: 100 }} />
+      <Modal
+        visible={showAllGraphs}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowAllGraphs(false);
+        }}
+      >
+        <BlurView intensity={25} style={{ padding: 25, width: "100%", height: "100%", backgroundColor: "rgba(0, 0, 0, 0.5)"}}>
+          <View style={{marginTop: 40}}>
+            <View style={{flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%"}}>
+              <ThemedText type="title">All Graphs</ThemedText>
+              <TouchableOpacity onPress={() => {
+                setShowAllGraphs(false);
+              }}>
+                <ThemedText type="default" darkColor='rgb(255, 130, 130)' lightColor='rgb(255, 130, 130)'>Close</ThemedText>
+              </TouchableOpacity>
+            </View>
+            {graphs.length > 0 ? <ScrollView>
+              {graphs.map((graph) => {
+
+                if (graph.data.length == 0) {
+                  return null;
+                }
+
+                return <View key={graph.name} style={{paddingTop: 25}}>
+                  <ThemedText type="subtitle" style={{fontWeight: 300}}>{graph.name.toLowerCase()}</ThemedText>
+                  <LineChart
+
+                        areaChart
+                        startFillColor="rgb(255, 255, 255)"
+                        startOpacity={0.15}
+                        endFillColor="rgb(255, 255, 255)"
+                        endOpacity={0}
+
+                        spacing={(Dimensions.get("window").width - 100) / graph.data.length}
+
+                        width={Dimensions.get("window").width - 100}
+                        data={
+                          graph.data
+                        }
+                        thickness={2}
+                        
+                        curved
+                        // hideOrigin
+
+                        dataPointsColor='rgba(255, 255, 255, 0.7)'
+
+                        textShiftX={10}
+                        textShiftY={0}
+                        textColor='rgba(255, 255, 255, 1)'
+                        noOfSections={5}
+
+                        // initialSpacing={0}
+
+                        xAxisType='dashed'
+
+                        xAxisLabelTextStyle={{
+                            color: "rgba(255, 255, 255, 0.5)",
+                            fontSize: 12
+                        }}
+                        rulesColor={"rgba(255, 255, 255, 0.2)"}
+                        
+                        xAxisColor={"rgba(255, 255, 255, 0.2)"}
+                        yAxisColor="rgba(255, 255, 255, 0)"
+                        yAxisTextStyle={{
+                            color: "rgba(255, 255, 255, 0.5)",
+                            fontSize: 12
+                        }}
+
+                        yAxisOffset={graph.data.map((item) => item.value).reduce((a, b) => Math.min(a, b), 1e9) - 5}
+                        // yAxisExtraHeight={20}
+
+                        verticalLinesStrokeDashArray={[5, 5]}
+                        showVerticalLines
+                        verticalLinesColor="rgba(255,255,255,0.2)"
+                        color="rgba(255, 255, 255, 0.25)"
+                    />
+                </View>
+              })}
+              <View style={{height: 50}} />
+            </ScrollView> : <ThemedText type="default" style={{color: "rgba(255, 255, 255, 0.5)", marginTop: 10}}>No graphs found. Log numerical resuls (eg. weights / time) to see graphs.</ThemedText>}
+          </View>
+        </BlurView>
+      </Modal>
     </Animated.ScrollView>
     // </ThemedView>
   );

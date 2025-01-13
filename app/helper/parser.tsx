@@ -237,7 +237,6 @@ export const importDataToSave = async (itenary) => {
 
   const content = await FileSystem.readAsStringAsync(data.uri);
 
-  // make sure first and second column of every row after first is numerical
   CSVStringToJSONForSaves(content)
 
   await FileSystem.writeAsStringAsync(
@@ -245,3 +244,24 @@ export const importDataToSave = async (itenary) => {
     content
   );
 }
+
+export const getAllGraphs = async () => {
+  const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory);
+
+  let graphData = await Promise.all(files.map(async (file) => {
+    if (file.includes("Logs")) {
+
+      const itenaryName = file.replace("Logs_", "").replace(".csv", "");
+
+      const data = await getWorkoutDataFromSave({name: itenaryName});
+
+      return {
+        name: itenaryName,
+        data: data,
+      };
+    }
+  })); 
+
+  return graphData;
+}
+

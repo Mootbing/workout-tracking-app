@@ -39,7 +39,6 @@ const RoutineScreen = () => {
 
     const fetchChartDataFor = (routineItem) => {
         console.log(routineItem.name)
-        console.log("Fetching")
 
         getWorkoutDataFromSave(routineItem).then((data) => {
             console.log(data)
@@ -323,7 +322,6 @@ const RoutineScreen = () => {
                                                 getWorkoutSaveURIIfExistsOrMakeNew(
                                                     makeSaveURI(routineItem.name)
                                                 ).then((uri) => {
-                                                    console.log(uri)
                                                     Sharing.shareAsync(
                                                         uri
                                                     )
@@ -399,6 +397,11 @@ const RoutineScreen = () => {
                         }
 
                         return <TouchableOpacity key={index} style={{ marginBottom: 25 }} onPress={() => {
+
+                            if (routinesLeft[0].name == "Rest") {
+                                return;
+                            }
+
                             const nowAndOn = routinesLeft.slice(index);
                             const later = routinesLeft.slice(0, index);
                             setRoutinesLeft([...nowAndOn, ...later]);
@@ -407,7 +410,7 @@ const RoutineScreen = () => {
                             <ThemedView darkColor='rgba(255, 255, 255, 0.1)' lightColor='rgba(0, 0, 0, 0.1)' style={{ height: 1, marginBottom: 25 }} />
                             <ThemedText type="regular" darkColor='rgba(255, 255, 255, 0.5)' lightColor='rgba(0, 0, 0, 0.5)' >{displayWorkoutItenaryString(routineItem).split(" ")[0]}</ThemedText>
                             <ThemedText type="default" style={{ fontWeight: 300, color: "rgba(255, 255, 255, 0.9)" }}>{displayWorkoutItenaryString(routineItem).split(" ").slice(1).join(" ")}</ThemedText>
-                            <ThemedText type='default' darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)' style={{ position: "absolute", right: 0, top: "50%" }}>Swap</ThemedText>
+                            {routinesLeft[0].name != "Rest" && <ThemedText type='default' darkColor='rgb(255, 235, 135)' lightColor='rgb(255, 235, 135)' style={{ position: "absolute", right: 0, top: "50%" }}>Swap</ThemedText>}
                         </TouchableOpacity>
                     })
                 }
